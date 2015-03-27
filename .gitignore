@@ -1,3 +1,6 @@
+# IDE File
+.idea
+
 # Logs
 logs
 *.log
@@ -17,7 +20,8 @@ coverage
 .grunt
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
-build/Release
+build
+Release
 
 # Dependency directory
 # Commenting this out is preferred by some people, see
