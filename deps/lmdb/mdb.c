@@ -88,7 +88,6 @@ extern int cacheflush(char *addr, int nbytes, int cache);
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #if defined(__sun)
 /* Most platforms have posix_memalign, older may only have memalign */
@@ -109,11 +108,14 @@ extern int cacheflush(char *addr, int nbytes, int cache);
 #endif
 
 #ifndef _WIN32
+#include <unistd.h>
 #include <pthread.h>
 #ifdef MDB_USE_POSIX_SEM
 # define MDB_USE_HASH		1
 #include <semaphore.h>
 #endif
+#else
+typedef long ssize_t;
 #endif
 
 #ifdef USE_VALGRIND
