@@ -20,6 +20,15 @@
               }
             }
           }
+        ],
+        [
+          "OS == 'mac'", {
+            "xcode_settings": {
+              "WARNING_CFLAGS": [
+                "-Wno-format-extra-args"
+              ]
+            }
+          }
         ]
       ]
     }
