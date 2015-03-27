@@ -11,7 +11,9 @@
       ],
       "sources": [
         "src/module.cc",
-        "src/queue.cc"
+        "src/meta.cc",
+        "src/consumer.cc",
+        "src/producer.cc"
       ],
       "conditions": [
         [
