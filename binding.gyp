@@ -10,7 +10,8 @@
         "<(module_root_dir)/deps/lmdb.gyp:lmdb"
       ],
       "sources": [
-        "src/module.cc"
+        "src/module.cc",
+        "src/queue.cc"
       ],
       "conditions": [
         [
