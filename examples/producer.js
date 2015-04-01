@@ -1,8 +1,9 @@
 "use strict";
 
-var Producer = require('../').Producer;
+var LmdbQueue = require('../'),
+    Producer = LmdbQueue.Producer;
 
-var producer = new Producer('test-data', 1024 * 1024 * 1024),
+var producer = new Producer({ path: 'test-data', dataType: LmdbQueue.STRING_TYPE, chunkSize: 1024 * 1024 * 1024, keepHours: 24 * 2 }),
     start = Date.now();
 
 for (var i = 0; i < 1024 * 1024; i += 10) {
