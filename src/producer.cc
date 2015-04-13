@@ -1,4 +1,4 @@
-
+#include "topic.h"
 #include "producer.h"
 
 using namespace std;
