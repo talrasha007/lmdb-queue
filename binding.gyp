@@ -11,7 +11,8 @@
       ],
       "sources": [
         "src/module.cc",
-        "src/meta.cc",
+        "src/env.cc",
+        "src/topic.cc",
         "src/consumer.cc",
         "src/producer.cc"
       ],
