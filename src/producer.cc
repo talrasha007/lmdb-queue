@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "topic.h"
 #include "producer.h"
 
@@ -8,6 +10,10 @@ Producer::Producer(const string& root) : _root(root) {
 }
 
 Producer::~Producer() {
+
+}
+
+void Producer::stats() {
 
 }
 
