@@ -73,6 +73,7 @@ void Producer::openHead(Txn* txn, bool rotating) {
 
     mdb_env_create(&_env);
     int rc = mdb_env_open(_env, path, MDB_NOSYNC | MDB_NOSUBDIR, 0664);
+    mdb_env_set_mapsize(_env, 128 * 1024 * 1024);
     if (rc != 0) {
         mdb_env_close(_env);
         _env = NULL;
