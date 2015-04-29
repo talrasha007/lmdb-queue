@@ -7,26 +7,33 @@
 #include <lmdb/lmdb.h>
 
 class Topic;
+class Txn;
 
 class Producer {
 public:
     typedef std::vector<std::tuple<const char*, size_t> > BatchType;
 
 public:
-	Producer(const std::string& root);
+	Producer(const std::string& root, const std::string& topic);
 	~Producer();
+
+private:
+    Producer(const Producer&);
+    Producer& operator=(const Producer&);
 
 public:
     void stats();
     bool push(const BatchType& batch);
 
 private:
+    void openHead(Txn* txn, bool rotating = false);
+    void closeCurrent();
     void rotate();
 
 private:
-	std::string _root;
     Topic* _topic;
 
+    uint32_t _current;
     MDB_env* _env;
     MDB_dbi _db;
 };

@@ -68,9 +68,12 @@ private:
     static NAN_METHOD(ctor) {
         NanScope();
 
-        NanUtf8String path(args[0]);
+        Handle<Object> opt = args[0]->ToObject();
 
-        ProducerWrap* ptr = new ProducerWrap(*path);
+        NanUtf8String path(opt->Get(NanNew("path")));
+        NanUtf8String topicName(opt->Get(NanNew("topic")));
+
+        ProducerWrap* ptr = new ProducerWrap(*path, *topicName);
         ptr->Wrap(args.This());
         NanReturnValue(args.This());
     }
@@ -101,7 +104,7 @@ private:
     }
 
 private:
-    ProducerWrap(const char* path) : _handle(path) { }
+    ProducerWrap(const char* path, const char* name) : _handle(path, name) { }
     Producer _handle;
 };
 

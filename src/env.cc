@@ -1,3 +1,4 @@
+#include "topic.h"
 #include "env.h"
 
 using namespace std;
@@ -18,9 +19,13 @@ Env::Env(const string& root, DbOpt* opt) : _root(root), _env(NULL) {
     if (opt) {
         mdb_env_set_mapsize(_env, opt->mapSize);
         mdb_env_set_maxdbs(_env, opt->maxDbs);
+    } else {
+        mdb_env_set_mapsize(_env, 256 * 1024 * 1024);
+        mdb_env_set_maxdbs(_env, 256);
     }
 
-    int rc = mdb_env_open(_env, root.c_str(), MDB_NOSYNC, 0664);
+    string path = root + "/__meta__";
+    int rc = mdb_env_open(_env, path.c_str(), MDB_NOSYNC | MDB_NOSUBDIR, 0664);
     if (rc != 0) {
         mdb_env_close(_env);
         _env = NULL;
@@ -37,4 +42,12 @@ Env::~Env() {
         mdb_env_close(_env);
         _env = NULL;
     }
+}
+
+Topic* Env::getTopic(const string& name) {
+    std::lock_guard<std::mutex> guard(_mtx);
+    TopicPtr& ptr = _topics[name];
+    if (!ptr.get()) ptr.reset(new Topic(this, name));
+
+    return ptr.get();
 }
