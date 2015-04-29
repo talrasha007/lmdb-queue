@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "topic.h"
 
 using namespace std;
@@ -31,7 +33,7 @@ Topic::Topic(Env* env, const string& name) : _env(env), _name(name) {
 
     mdb_set_compare(txn.getEnvTxn(), _desc, descCmp);
 
-    MDB_val key{ 0 }, val{ 0 };
+    MDB_val key{ 0, 0 }, val{ 0, 0 };
 
     uint64_t head = 0;
     key.mv_data = (void*)keyProducerStr;
@@ -55,7 +57,7 @@ uint32_t Topic::getProducerHeadFile(Txn& txn) {
     MDB_cursor *cur = NULL;
     mdb_cursor_open(txn.getEnvTxn(), _desc, &cur);
 
-    MDB_val key{ 0 }, val{ 0 };
+    MDB_val key{ 0, 0 }, val{ 0, 0 };
     mdb_cursor_get(cur, &key, &val, MDB_LAST);
     mdb_cursor_close(cur);
 
@@ -71,7 +73,7 @@ void Topic::setProducerHeadFile(Txn& txn, uint32_t file, uint64_t offset) {
 
 uint64_t Topic::getProducerHead(Txn& txn) {
     MDB_val key{ strlen(keyProducerStr), (void*)keyProducerStr },
-            val{ 0 };
+            val{ 0, 0 };
 
     mdb_get(txn.getEnvTxn(), _desc, &key, &val);
     return *(uint64_t*)val.mv_data;

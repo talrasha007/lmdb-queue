@@ -14,7 +14,7 @@ enum DataType {
 template<DataType DT> class BatchWrap {
 public:
     ~BatchWrap();
-    void push(Local<Value>& val);
+    void push(const Local<Value>& val);
 
 public:
     Producer::BatchType& get() {
@@ -33,7 +33,7 @@ template<> BatchWrap<STRING_TYPE>::~BatchWrap()  {
     for (Producer::BatchType::iterator it = _batch.begin(); it != _batch.end(); ++it) delete[] std::get<0>(*it);
 }
 
-template<> void BatchWrap<STRING_TYPE>::push(Local<Value>& val) {
+template<> void BatchWrap<STRING_TYPE>::push(const Local<Value>& val) {
     v8::Local<v8::String> toStr = val->ToString();
     size_t size = toStr->Utf8Length();
     char* buf = new char[size + 1];
@@ -44,7 +44,7 @@ template<> void BatchWrap<STRING_TYPE>::push(Local<Value>& val) {
 template<> BatchWrap<BUFFER_TYPE>::~BatchWrap() {
 }
 
-template<> void BatchWrap<BUFFER_TYPE>::push(Local<Value>& val) {
+template<> void BatchWrap<BUFFER_TYPE>::push(const Local<Value>& val) {
     _batch.push_back(make_tuple(node::Buffer::Data(val), node::Buffer::Length(val)));
 }
 
