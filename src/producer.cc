@@ -1,3 +1,7 @@
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <iostream>
 
 #include "topic.h"
@@ -71,6 +75,9 @@ void Producer::openHead(Txn* txn, bool rotating) {
     char path[4096];
     sprintf(path, "%s/%s.%d", _topic->getEnv()->getRoot().c_str(), _topic->getName().c_str(), headFile);
 
+#ifdef _WIN32
+    Sleep(500);
+#endif
     mdb_env_create(&_env);
     int rc = mdb_env_open(_env, path, MDB_NOSYNC | MDB_NOSUBDIR, 0664);
     mdb_env_set_mapsize(_env, 128 * 1024 * 1024);
