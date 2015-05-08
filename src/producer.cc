@@ -76,7 +76,7 @@ void Producer::openHead(Txn* txn, bool rotating) {
     sprintf(path, "%s/%s.%d", _topic->getEnv()->getRoot().c_str(), _topic->getName().c_str(), headFile);
 
 #ifdef _WIN32
-    Sleep(500);
+    Sleep(500); // Fix error on windows when multi process rotate at same time. ("The requested operation cannot be performed on a file with a user-mapped section open.")
 #endif
     mdb_env_create(&_env);
     int rc = mdb_env_open(_env, path, MDB_NOSYNC | MDB_NOSUBDIR, 0664);
