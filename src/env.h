@@ -13,6 +13,11 @@ struct EnvOpt {
     size_t mapSize;
 };
 
+struct TopicOpt {
+    size_t chunkSize;
+    size_t chunksToKeep;
+};
+
 class Env {
 private:
     friend class EnvManager;

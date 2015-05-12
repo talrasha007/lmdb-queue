@@ -20,6 +20,7 @@ Env::Env(const string& root, EnvOpt* opt) : _root(root), _env(NULL) {
         mdb_env_set_mapsize(_env, opt->mapSize);
         mdb_env_set_maxdbs(_env, opt->maxTopicNum);
     } else {
+        /* Default opt */
         mdb_env_set_mapsize(_env, 256 * 1024 * 1024);
         mdb_env_set_maxdbs(_env, 256);
     }

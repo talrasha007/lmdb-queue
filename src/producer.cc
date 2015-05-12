@@ -2,6 +2,7 @@
 #include <windows.h>
 #endif
 
+#include <stdio.h>
 #include <iostream>
 
 #include "topic.h"
@@ -9,7 +10,15 @@
 
 using namespace std;
 
-Producer::Producer(const string& root, const string& topic) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(NULL), _db(NULL) {
+Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(NULL), _db(NULL) {
+    if (opt) {
+        _opt = *opt;
+    } else {
+        /* Default opt */
+        _opt.chunkSize = 1024 * 1024 * 1024;
+        _opt.chunksToKeep = 8;
+    }
+
     Txn txn(_topic->getEnv(), NULL);
     openHead(&txn);
     txn.commit();
@@ -80,7 +89,7 @@ void Producer::openHead(Txn* txn, bool rotating) {
 #endif
     mdb_env_create(&_env);
     int rc = mdb_env_open(_env, path, MDB_NOSYNC | MDB_NOSUBDIR, 0664);
-    mdb_env_set_mapsize(_env, 128 * 1024 * 1024);
+    mdb_env_set_mapsize(_env, _opt.chunkSize);
     if (rc != 0) {
         mdb_env_close(_env);
         _env = NULL;

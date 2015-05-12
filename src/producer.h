@@ -8,13 +8,14 @@
 
 class Topic;
 class Txn;
+struct TopicOpt;
 
 class Producer {
 public:
     typedef std::vector<std::tuple<const char*, size_t> > BatchType;
 
 public:
-	Producer(const std::string& root, const std::string& topic);
+	Producer(const std::string& root, const std::string& topic, TopicOpt* opt);
 	~Producer();
 
 private:
@@ -31,6 +32,7 @@ private:
     void rotate();
 
 private:
+    TopicOpt _opt;
     Topic* _topic;
 
     uint32_t _current;
