@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Env* EnvManager::getEnv(const string& root, DbOpt *opt) {
+Env* EnvManager::getEnv(const string& root, EnvOpt *opt) {
     static EnvManager instance;
 
     std::lock_guard<std::mutex> guard(instance._mtx);
@@ -13,12 +13,12 @@ Env* EnvManager::getEnv(const string& root, DbOpt *opt) {
     return ptr.get();
 }
 
-Env::Env(const string& root, DbOpt* opt) : _root(root), _env(NULL) {
+Env::Env(const string& root, EnvOpt* opt) : _root(root), _env(NULL) {
     mdb_env_create(&_env);
 
     if (opt) {
         mdb_env_set_mapsize(_env, opt->mapSize);
-        mdb_env_set_maxdbs(_env, opt->maxDbs);
+        mdb_env_set_maxdbs(_env, opt->maxTopicNum);
     } else {
         mdb_env_set_mapsize(_env, 256 * 1024 * 1024);
         mdb_env_set_maxdbs(_env, 256);

@@ -8,8 +8,8 @@
 
 class Topic;
 
-struct DbOpt {
-    size_t maxDbs;
+struct EnvOpt {
+    size_t maxTopicNum;
     size_t mapSize;
 };
 
@@ -18,7 +18,7 @@ private:
     friend class EnvManager;
     friend class Txn;
 
-    Env(const std::string& root, DbOpt *opt);
+    Env(const std::string& root, EnvOpt *opt);
     Env(const Env&);
     Env& operator=(const Env&);
 
@@ -43,7 +43,7 @@ private:
 
 class EnvManager {
 public:
-    static Env* getEnv(const std::string& root, DbOpt *opt = NULL);
+    static Env* getEnv(const std::string& root, EnvOpt *opt = NULL);
 
 private:
     std::mutex _mtx;
