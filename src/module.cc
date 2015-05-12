@@ -73,7 +73,13 @@ private:
         NanUtf8String path(opt->Get(NanNew("path")));
         NanUtf8String topicName(opt->Get(NanNew("topic")));
 
-        ProducerWrap* ptr = new ProducerWrap(*path, *topicName);
+        TopicOpt topicOpt{ 1024 * 1024 * 1024, 8 };
+        Local<Value> chunkSize = opt->Get(NanNew("chunkSize"));
+        Local<Value> chunksToKeep = opt->Get(NanNew("chunksToKeep"));
+        if (chunkSize->IsNumber()) topicOpt.chunkSize = size_t(chunkSize->NumberValue());
+        if (chunksToKeep->IsNumber()) topicOpt.chunksToKeep = size_t(chunksToKeep->NumberValue());
+
+        ProducerWrap* ptr = new ProducerWrap(*path, *topicName, &topicOpt);
         ptr->Wrap(args.This());
         NanReturnValue(args.This());
     }
@@ -104,7 +110,7 @@ private:
     }
 
 private:
-    ProducerWrap(const char* path, const char* name) : _handle(path, name) { }
+    ProducerWrap(const char* path, const char* name, TopicOpt* opt) : _handle(path, name, opt) { }
     Producer _handle;
 };
 

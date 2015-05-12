@@ -5,10 +5,9 @@
 #include <string>
 
 #include <lmdb/lmdb.h>
+#include "env.h"
 
 class Topic;
-class Txn;
-struct TopicOpt;
 
 class Producer {
 public:
