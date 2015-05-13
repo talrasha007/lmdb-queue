@@ -13,7 +13,7 @@ Env* EnvManager::getEnv(const string& root, EnvOpt *opt) {
     return ptr.get();
 }
 
-Env::Env(const string& root, EnvOpt* opt) : _root(root), _env(NULL) {
+Env::Env(const string& root, EnvOpt* opt) : _root(root), _env(nullptr) {
     mdb_env_create(&_env);
 
     if (opt) {
@@ -29,7 +29,7 @@ Env::Env(const string& root, EnvOpt* opt) : _root(root), _env(NULL) {
     int rc = mdb_env_open(_env, path.c_str(), MDB_NOSYNC | MDB_NOSUBDIR, 0664);
     if (rc != 0) {
         mdb_env_close(_env);
-        _env = NULL;
+        _env = nullptr;
         printf("Env open error.\n%s\n", mdb_strerror(rc));
         return;
     }
@@ -41,7 +41,7 @@ Env::Env(const string& root, EnvOpt* opt) : _root(root), _env(NULL) {
 Env::~Env() {
     if (_env) {
         mdb_env_close(_env);
-        _env = NULL;
+        _env = nullptr;
     }
 }
 

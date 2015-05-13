@@ -61,7 +61,7 @@ private:
 
 class Txn {
 public:
-    Txn(Env* env, MDB_env* consumerOrProducerEnv, bool readOnly = false) : _abort(false), _envTxn(NULL), _cpTxn(NULL) {
+    Txn(Env* env, MDB_env* consumerOrProducerEnv, bool readOnly = false) : _abort(false), _envTxn(nullptr), _cpTxn(nullptr) {
         mdb_txn_begin(env->_env, NULL, 0, &_envTxn);
         if (consumerOrProducerEnv) mdb_txn_begin(consumerOrProducerEnv, NULL, 0, &_cpTxn);
     }
@@ -79,7 +79,7 @@ public:
         if (_cpTxn) mdb_txn_abort(_cpTxn);
         mdb_txn_abort(_envTxn);
 
-        _cpTxn = _envTxn = NULL;
+        _cpTxn = _envTxn = nullptr;
     }
 
     int commit() {
@@ -88,13 +88,13 @@ public:
             rc = mdb_txn_commit(_cpTxn);
             if (rc != 0) {
                 mdb_txn_abort(_envTxn);
-                _cpTxn = _envTxn = NULL;
+                _cpTxn = _envTxn = nullptr;
                 return rc;
             }
         }
 
         rc = mdb_txn_commit(_envTxn);
-        _cpTxn = _envTxn = NULL;
+        _cpTxn = _envTxn = nullptr;
         return rc;
     }
 

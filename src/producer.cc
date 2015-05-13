@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(NULL), _db(NULL) {
+Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0) {
     if (opt) {
         _opt = *opt;
     } else {
@@ -92,7 +92,7 @@ void Producer::openHead(Txn* txn, bool rotating) {
     mdb_env_set_mapsize(_env, _opt.chunkSize);
     if (rc != 0) {
         mdb_env_close(_env);
-        _env = NULL;
+        _env = nullptr;
         printf("Producer open error.\n%s\n", mdb_strerror(rc));
         return;
     }
