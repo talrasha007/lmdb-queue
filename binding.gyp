@@ -17,8 +17,8 @@
         "src/topic.cc",
         "src/consumer.h",
         "src/consumer.cc",
-        "src/producer.h"
-        "src/producer.cc"
+        "src/producer.h",
+        "src/producer.cc",
         "src/wrapper.h"
       ],
       "conditions": [
