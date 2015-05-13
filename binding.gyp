@@ -11,10 +11,15 @@
       ],
       "sources": [
         "src/module.cc",
+        "src/env.h",
         "src/env.cc",
+        "src/topic.h",
         "src/topic.cc",
+        "src/consumer.h",
         "src/consumer.cc",
+        "src/producer.h"
         "src/producer.cc"
+        "src/wrapper.h"
       ],
       "conditions": [
         [
