@@ -39,6 +39,7 @@ Env::Env(const string& root, EnvOpt* opt) : _root(root), _env(nullptr) {
 }
 
 Env::~Env() {
+    _topics.clear();
     if (_env) {
         mdb_env_close(_env);
         _env = nullptr;
