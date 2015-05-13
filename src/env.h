@@ -4,7 +4,8 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <lmdb/lmdb.h>
+
+#include "wrapper.h"
 
 class Topic;
 

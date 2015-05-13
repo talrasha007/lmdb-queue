@@ -40,12 +40,15 @@ Topic::Topic(Env* env, const string& name) : _env(env), _name(name) {
     key.mv_size = strlen(keyProducerStr);
     val.mv_data = &head;
     val.mv_size = sizeof(head);
-    mdb_put(txn.getEnvTxn(), _desc, &key, &val, MDB_NOOVERWRITE);
+    rc = mdb_put(txn.getEnvTxn(), _desc, &key, &val, MDB_NOOVERWRITE);
 
-    uint32_t headFile = 0;
-    key.mv_data = &headFile;
-    key.mv_size = sizeof(headFile);
-    mdb_put(txn.getEnvTxn(), _desc, &key, &val, MDB_NOOVERWRITE);
+    if (rc == 0) {
+        uint32_t headFile = 0;
+        key.mv_data = &headFile;
+        key.mv_size = sizeof(headFile);
+        mdb_put(txn.getEnvTxn(), _desc, &key, &val, MDB_NOOVERWRITE);
+    }
+
     txn.commit();
 }
 
@@ -54,14 +57,9 @@ Topic::~Topic() {
 }
 
 uint32_t Topic::getProducerHeadFile(Txn& txn) {
-    MDB_cursor *cur = NULL;
-    mdb_cursor_open(txn.getEnvTxn(), _desc, &cur);
-
-    MDB_val key{ 0, 0 }, val{ 0, 0 };
-    mdb_cursor_get(cur, &key, &val, MDB_LAST);
-    mdb_cursor_close(cur);
-
-    return *(uint32_t*)key.mv_data;
+    MDBCursor cur(_desc, txn.getEnvTxn());
+    cur.gotoLast();
+    return *(uint32_t*)cur.key().mv_data;
 }
 
 void Topic::setProducerHeadFile(Txn& txn, uint32_t file, uint64_t offset) {
@@ -84,4 +82,40 @@ void Topic::setProducerHead(Txn& txn, uint64_t head) {
             val{ sizeof(head), &head };
 
     mdb_put(txn.getEnvTxn(), _desc, &key, &val, 0);
+}
+
+int Topic::getChunkFilePath(char* buf, uint32_t chunkSeq) {
+    return sprintf(buf, "%s/%s.%d", getEnv()->getRoot().c_str(), getName().c_str(), chunkSeq);
+}
+
+size_t Topic::countChunks(Txn& txn) {
+    MDBCursor cur(_desc, txn.getEnvTxn());
+
+    size_t count = 0;
+    uint32_t minFile = 0;
+    int rc = cur.gte(minFile);
+
+    while (rc == 0 && cur.key().mv_size == 4) {
+        ++count;
+        rc = cur.next();
+    }
+
+    return count;
+}
+
+void Topic::removeOldestChunk(Txn& txn) {
+    MDBCursor cur(_desc, txn.getEnvTxn());
+
+    uint32_t oldest = 0;
+    int rc = cur.gte(oldest);
+    if (rc == 0 && cur.key().mv_size == sizeof(oldest)) {
+        oldest = *(uint32_t*)cur.key().mv_data;
+        cur.del();
+
+        char path[4096];
+        getChunkFilePath(path, oldest);
+        remove(path);
+        strcat(path, "-lock");
+        remove(path);
+    }
 }

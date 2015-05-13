@@ -25,6 +25,10 @@ public:
     uint64_t getConsumerHead(Txn& txn, const std::string& name);
     void setConsumerHead(Txn& txn, const std::string& name, uint64_t head);
 
+    int getChunkFilePath(char* buf, uint32_t chunkSeq);
+    size_t countChunks(Txn& txn);
+    void removeOldestChunk(Txn& txn);
+
 private:
     Env *_env;
 

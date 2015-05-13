@@ -82,7 +82,7 @@ void Producer::openHead(Txn* txn, bool rotating) {
     _current = headFile;
 
     char path[4096];
-    sprintf(path, "%s/%s.%d", _topic->getEnv()->getRoot().c_str(), _topic->getName().c_str(), headFile);
+    _topic->getChunkFilePath(path, headFile);
 
 #ifdef _WIN32
     Sleep(500); // Fix error on windows when multi process rotate at same time. ("The requested operation cannot be performed on a file with a user-mapped section open.")
@@ -106,7 +106,12 @@ void Producer::openHead(Txn* txn, bool rotating) {
 
 void Producer::rotate() {
     Txn txn(_topic->getEnv(), NULL);
+
     closeCurrent();
+    for (size_t chunks = _topic->countChunks(txn); chunks >= _opt.chunksToKeep; --chunks) {
+        _topic->removeOldestChunk(txn);
+    }
+
     openHead(&txn, true);
     txn.commit();
 }
