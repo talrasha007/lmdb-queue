@@ -88,8 +88,12 @@ void Producer::openHead(Txn* txn, bool rotating) {
     Sleep(500); // Fix error on windows when multi process rotate at same time. ("The requested operation cannot be performed on a file with a user-mapped section open.")
 #endif
     mdb_env_create(&_env);
-    int rc = mdb_env_open(_env, path, MDB_NOSYNC | MDB_NOSUBDIR, 0664);
     mdb_env_set_mapsize(_env, _opt.chunkSize);
+    int rc = mdb_env_open(_env, path, MDB_NOSYNC | MDB_NOSUBDIR, 0664);
+
+    int cleared = 0;
+    mdb_reader_check(_env, &cleared);
+
     if (rc != 0) {
         mdb_env_close(_env);
         _env = nullptr;
