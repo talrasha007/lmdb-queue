@@ -84,6 +84,36 @@ void Topic::setProducerHead(Txn& txn, uint64_t head) {
     mdb_put(txn.getEnvTxn(), _desc, &key, &val, 0);
 }
 
+uint32_t Topic::getConsumerHeadFile(Txn& txn, const std::string& name, uint32_t searchFrom) {
+    char keyStr[4096];
+    sprintf(keyStr, keyConsumerStr, name.c_str());
+
+}
+
+uint64_t Topic::getConsumerHead(Txn& txn, const std::string& name) {
+    char keyStr[4096];
+    sprintf(keyStr, keyConsumerStr, name.c_str());
+
+    MDB_val key{ strlen(keyStr), keyStr }, val{ 0, nullptr };
+    int rc = mdb_get(txn.getEnvTxn(), _desc, &key, &val);
+    if (rc == 0) {
+        return *(uint64_t*)val.mv_data;
+    } else {
+        if (rc != MDB_NOTFOUND) cout << "Consumer seek error: " << mdb_strerror(rc) << endl;
+
+    }
+}
+
+void Topic::setConsumerHead(Txn& txn, const std::string& name, uint64_t head) {
+    char keyStr[4096];
+    sprintf(keyStr, keyConsumerStr, name.c_str());
+
+    MDB_val key{ strlen(keyStr), keyStr },
+            val{ sizeof(head), &head };
+
+    mdb_put(txn.getEnvTxn(), _desc, &key, &val, 0);
+}
+
 int Topic::getChunkFilePath(char* buf, uint32_t chunkSeq) {
     return sprintf(buf, "%s/%s.%d", getEnv()->getRoot().c_str(), getName().c_str(), chunkSeq);
 }
