@@ -38,7 +38,7 @@ template<> void BatchWrap<STRING_TYPE>::push(const Local<Value>& val) {
     size_t size = toStr->Utf8Length();
     char* buf = new char[size + 1];
     toStr->WriteUtf8(buf);
-    _batch.push_back(make_tuple(buf, size));
+    _batch.push_back(make_tuple(buf, size + 1));
 }
 
 template<> BatchWrap<BUFFER_TYPE>::~BatchWrap() {
