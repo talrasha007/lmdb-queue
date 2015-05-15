@@ -159,6 +159,12 @@ private:
         if (chunkSize->IsNumber()) topicOpt.chunkSize = size_t(chunkSize->NumberValue());
 
         ConsumerWrap* ptr = new ConsumerWrap(*path, *topicName, *name, &topicOpt);
+        Local<Value> batchSize = opt->Get(NanNew("batchSize"));
+        if (batchSize->IsNumber()) {
+           size_t bs = size_t(batchSize->NumberValue());
+           if (bs > 0 && bs < 1024 * 1024) ptr->_batchSize = bs;
+        }
+
         ptr->Wrap(args.This());
         NanReturnValue(args.This());
     }
@@ -186,7 +192,7 @@ private:
 
         ptr->_batch.clear();
         ptr->_cur = 1;
-        ptr->_handle.pull(ptr->_batch, 128);
+        ptr->_handle.pull(ptr->_batch, ptr->_batchSize);
         if (ptr->_batch.size() > 0) {
             NanReturnValue(ReturnMaker<DT>::make(ptr->_batch.at(0)));
         }
@@ -195,11 +201,11 @@ private:
     }
 
 private:
-    ConsumerWrap(const char* path, const char* topicName, const char* name, TopicOpt* opt) : _handle(path, topicName, name, opt), _cur(0) { }
+    ConsumerWrap(const char* path, const char* topicName, const char* name, TopicOpt* opt) : _handle(path, topicName, name, opt), _cur(0), _batchSize(128) { }
 
     Consumer _handle;
     Consumer::BatchType _batch;
-    size_t _cur;
+    size_t _cur, _batchSize;
 };
 
 void init(v8::Handle<v8::Object> exports) {
