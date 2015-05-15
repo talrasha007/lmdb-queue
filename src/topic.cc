@@ -59,7 +59,7 @@ Topic::~Topic() {
 uint32_t Topic::getProducerHeadFile(Txn& txn) {
     MDBCursor cur(_desc, txn.getEnvTxn());
     cur.gotoLast();
-    return *(uint32_t*)cur.key().mv_data;
+    return cur.key<uint32_t>();
 }
 
 void Topic::setProducerHeadFile(Txn& txn, uint32_t file, uint64_t offset) {
@@ -85,9 +85,26 @@ void Topic::setProducerHead(Txn& txn, uint64_t head) {
 }
 
 uint32_t Topic::getConsumerHeadFile(Txn& txn, const std::string& name, uint32_t searchFrom) {
-    char keyStr[4096];
-    sprintf(keyStr, keyConsumerStr, name.c_str());
+    uint64_t head = getConsumerHead(txn, name);
 
+    MDBCursor cur(_desc, txn.getEnvTxn());
+    int rc = cur.gte(searchFrom);
+    uint32_t ret = cur.key<uint32_t>();
+    uint64_t fh = cur.val<uint64_t>();
+    while (rc && head > fh) {
+        rc = cur.next();
+        if (rc == 0) {
+            uint64_t ch = cur.val<uint64_t>();
+            if (head < ch) {
+                return ret;
+            } else {
+                ret = cur.key<uint32_t>();
+                fh = ch;
+            }
+        }
+    }
+
+    return ret;
 }
 
 uint64_t Topic::getConsumerHead(Txn& txn, const std::string& name) {
@@ -101,6 +118,9 @@ uint64_t Topic::getConsumerHead(Txn& txn, const std::string& name) {
     } else {
         if (rc != MDB_NOTFOUND) cout << "Consumer seek error: " << mdb_strerror(rc) << endl;
 
+        MDBCursor cur(_desc, txn.getEnvTxn());
+        cur.gte(uint32_t(0));
+        return cur.val<uint64_t>();
     }
 }
 
@@ -139,7 +159,7 @@ void Topic::removeOldestChunk(Txn& txn) {
     uint32_t oldest = 0;
     int rc = cur.gte(oldest);
     if (rc == 0 && cur.key().mv_size == sizeof(oldest)) {
-        oldest = *(uint32_t*)cur.key().mv_data;
+        oldest = cur.key<int32_t>();
         cur.del();
 
         char path[4096];
