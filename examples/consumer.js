@@ -8,9 +8,9 @@ var consumer = new Consumer({ path: __dirname + '/test-data', topic: 'test', nam
 
 console.log('Begin read queue.');
 
-for (var i = 0; i < 10 * 1024 * 1024; i++) {
-    consumer.pull();
+var cnt = 0;
+while (consumer.pull()) {
     consumer.offset();
 }
 
-console.log('Read 10M messages in %d ms', Date.now() - start);
+console.log('Read %d messages in %d ms', cnt, Date.now() - start);

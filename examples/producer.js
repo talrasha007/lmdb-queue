@@ -9,7 +9,7 @@ var producer = new Producer({ path: __dirname + '/test-data', topic: 'test', dat
 console.log('Begin write to queue.');
 
 var step = 1024;
-for (var i = 0; i < 10 * 1024 * 1024; i += step) {
+for (var i = 0; i < 10 * 1000 * 1000; i += step) {
     //producer.push('msg' + i);
     var msg = [];
     for (var j = 0; j < step; j++) msg.push('msg' + (i + j));
