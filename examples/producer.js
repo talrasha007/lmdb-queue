@@ -8,7 +8,7 @@ var producer = new Producer({ path: __dirname + '/test-data', topic: 'test', dat
 
 console.log('Begin write to queue.');
 
-var step = 1024;
+var step = 1000;
 for (var i = 0; i < 10 * 1000 * 1000; i += step) {
     //producer.push('msg' + i);
     var msg = [];

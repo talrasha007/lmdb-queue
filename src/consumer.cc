@@ -49,7 +49,7 @@ void Consumer::pull(BatchType& result, size_t cnt) {
         } else {
             if (rc != MDB_NOTFOUND) cout << "Consumer seek error: " << mdb_strerror(rc) << endl;
 
-            if (head <= _topic->getProducerHead(txn)) {
+            if (head < _topic->getProducerHead(txn)) {
                 shouldRotate = true;
             }
         }
