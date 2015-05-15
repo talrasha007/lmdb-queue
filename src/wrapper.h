@@ -5,7 +5,7 @@
 
 class MDBCursor {
 public:
-    MDBCursor(MDB_dbi& db, MDB_txn *txn) : _cursor(nullptr) {
+    MDBCursor(MDB_dbi db, MDB_txn *txn) : _cursor(nullptr) {
         /* init list not supported in vs 2013 */
         _key.mv_size = _val.mv_size = 0;
         _key.mv_data = _val.mv_data = nullptr;
@@ -21,6 +21,8 @@ public:
     }
 
 public:
+    template<class INT> INT key() { return *(INT*)_key.mv_data; }
+    template<class INT> INT val() { return *(INT*)_val.mv_data; }
     const MDB_val& key() { return _key; }
     const MDB_val& val() { return _val; }
     int gotoFirst() { return mdb_cursor_get(_cursor, &_key, &_val, MDB_FIRST); }
