@@ -34,7 +34,7 @@ void Consumer::pull(BatchType& result, size_t cnt) {
 
         if (rc == 0) {
             for (; rc == 0 && cnt > 0; --cnt) {
-                uint64_t offset = *(uint64_t*)_cursor->key().mv_data;
+                uint64_t offset = _cursor->key<uint64_t>();
                 const char* data = (const char*)_cursor->val().mv_data;
                 size_t len = _cursor->val().mv_size;
                 result.push_back(ItemType(offset, data, len));
