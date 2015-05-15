@@ -154,9 +154,8 @@ private:
         NanUtf8String topicName(opt->Get(NanNew("topic")));
         NanUtf8String name(opt->Get(NanNew("name")));
 
-        TopicOpt topicOpt{ 1024 * 1024 * 1024, 8 };
+        TopicOpt topicOpt{ 1024 * 1024 * 1024, 0 };
         Local<Value> chunkSize = opt->Get(NanNew("chunkSize"));
-        Local<Value> chunksToKeep = opt->Get(NanNew("chunksToKeep"));
         if (chunkSize->IsNumber()) topicOpt.chunkSize = size_t(chunkSize->NumberValue());
 
         ConsumerWrap* ptr = new ConsumerWrap(*path, *topicName, *name, &topicOpt);
@@ -200,7 +199,7 @@ private:
 
     Consumer _handle;
     Consumer::BatchType _batch;
-    int _cur;
+    size_t _cur;
 };
 
 void init(v8::Handle<v8::Object> exports) {
