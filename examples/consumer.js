@@ -10,7 +10,7 @@ console.log('Begin read queue.');
 
 var cnt = 0;
 while (consumer.pull()) {
-    consumer.offset();
+    cnt++;
 }
 
 console.log('Read %d messages in %d ms', cnt, Date.now() - start);
