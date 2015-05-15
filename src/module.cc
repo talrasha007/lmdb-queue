@@ -137,6 +137,7 @@ public:
         tpl->SetClassName(NanNew(className));
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
+        NODE_SET_PROTOTYPE_METHOD(tpl, "offset", ConsumerWrap::offset);
         NODE_SET_PROTOTYPE_METHOD(tpl, "pullString", ConsumerWrap::pull<STRING_TYPE>);
         NODE_SET_PROTOTYPE_METHOD(tpl, "pullBuffer", ConsumerWrap::pull<BUFFER_TYPE>);
 

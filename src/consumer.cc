@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Consumer::Consumer(const std::string& root, const std::string& topic, const std::string& name, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _name(name), _current(-1), _lastOffset(0), _env(nullptr), _db(0), _rtxn(nullptr), _cursor(nullptr) {
+Consumer::Consumer(const std::string& root, const std::string& topic, const std::string& name, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _name(name), _current(0), _lastOffset(0), _env(nullptr), _db(0), _rtxn(nullptr), _cursor(nullptr) {
     if (opt) {
         _opt = *opt;
     } else {
@@ -33,12 +33,18 @@ void Consumer::pull(BatchType& result, size_t cnt) {
         int rc = _cursor->seek(head);
 
         if (rc == 0) {
+            uint64_t offset = 0;
             for (; rc == 0 && cnt > 0; --cnt) {
-                uint64_t offset = _cursor->key<uint64_t>();
+                offset = _cursor->key<uint64_t>();
                 const char* data = (const char*)_cursor->val().mv_data;
                 size_t len = _cursor->val().mv_size;
                 result.push_back(ItemType(offset, data, len));
                 rc = _cursor->next();
+            }
+
+            if (offset > 0) {
+                _topic->setConsumerHead(txn, _name, offset + 1);
+                txn.commit();
             }
         } else {
             if (rc != MDB_NOTFOUND) cout << "Consumer seek error: " << mdb_strerror(rc) << endl;
@@ -57,6 +63,7 @@ void Consumer::pull(BatchType& result, size_t cnt) {
 
 void Consumer::openHead(Txn* txn) {
     _current = _topic->getConsumerHeadFile(*txn, _name, _current);
+
     char path[4096];
     _topic->getChunkFilePath(path, _current);
 
@@ -75,7 +82,7 @@ void Consumer::openHead(Txn* txn) {
     }
 
     MDB_txn *otxn;
-    mdb_txn_begin(_env, NULL, 0, &otxn);
+    mdb_txn_begin(_env, NULL, MDB_RDONLY, &otxn);
     mdb_dbi_open(otxn, NULL, MDB_CREATE, &_db);
     mdb_set_compare(otxn, _db, mdbIntCmp<uint64_t>);
     mdb_txn_commit(otxn);

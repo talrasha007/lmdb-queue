@@ -91,7 +91,7 @@ uint32_t Topic::getConsumerHeadFile(Txn& txn, const std::string& name, uint32_t 
     int rc = cur.gte(searchFrom);
     uint32_t ret = cur.key<uint32_t>();
     uint64_t fh = cur.val<uint64_t>();
-    while (rc && head > fh) {
+    while (rc == 0 && head >= fh) {
         rc = cur.next();
         if (rc == 0) {
             uint64_t ch = cur.val<uint64_t>();
