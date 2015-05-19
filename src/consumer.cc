@@ -30,7 +30,7 @@ void Consumer::pull(BatchType& result, size_t cnt) {
         mdb_txn_renew(_rtxn);
 
         uint64_t head = _topic->getConsumerHead(txn, _name);
-        int rc = _cursor->seek(head);
+        int rc = _cursor->gte(head);
 
         if (rc == 0) {
             uint64_t offset = 0;
