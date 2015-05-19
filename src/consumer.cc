@@ -77,7 +77,7 @@ void Consumer::openHead(Txn* txn) {
     if (rc != 0) {
         mdb_env_close(_env);
         _env = nullptr;
-        printf("Producer open error.\n%s\n", mdb_strerror(rc));
+        printf("Consumer open error.\n%s\n", mdb_strerror(rc));
         return;
     }
 
