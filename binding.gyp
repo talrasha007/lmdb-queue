@@ -39,8 +39,7 @@
         ],
         [
           "OS=='linux'", {
-            "cflags_cc": [ "-std=c++11" ],
-            "ldflags": ["-static-libstdc++"]
+            "cflags_cc": [ "-std=c++11" ]
           }
         ],
         [

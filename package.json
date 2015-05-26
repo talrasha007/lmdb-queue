@@ -4,7 +4,7 @@
   "version": "0.0.2",
   "repository": "https://github.com/talrasha007/lmdb-queue.git",
   "dependencies": {
-    "nan": "^1.7.0"
+    "nan": "~1.8.4"
   },
   "main": "lib/index.js"
 }
