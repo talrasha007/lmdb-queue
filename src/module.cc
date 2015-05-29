@@ -138,8 +138,8 @@ public:
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
         NODE_SET_PROTOTYPE_METHOD(tpl, "offset", ConsumerWrap::offset);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "pullString", ConsumerWrap::pull<STRING_TYPE>);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "pullBuffer", ConsumerWrap::pull<BUFFER_TYPE>);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "popString", ConsumerWrap::pop<STRING_TYPE>);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "popBuffer", ConsumerWrap::pop<BUFFER_TYPE>);
 
         exports->Set(NanNew(className), tpl->GetFunction());
     }
@@ -181,7 +181,7 @@ private:
         NanReturnUndefined();
     }
 
-    template<DataType DT> static NAN_METHOD(pull) {
+    template<DataType DT> static NAN_METHOD(pop) {
         NanScope();
 
         ConsumerWrap* ptr = ObjectWrap::Unwrap<ConsumerWrap>(args.This());
@@ -192,7 +192,7 @@ private:
 
         ptr->_batch.clear();
         ptr->_cur = 1;
-        ptr->_handle.pull(ptr->_batch, ptr->_batchSize);
+        ptr->_handle.pop(ptr->_batch, ptr->_batchSize);
         if (ptr->_batch.size() > 0) {
             NanReturnValue(ReturnMaker<DT>::make(ptr->_batch.at(0)));
         }

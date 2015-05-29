@@ -21,7 +21,7 @@ Consumer::~Consumer() {
     closeCurrent();
 }
 
-void Consumer::pull(BatchType& result, size_t cnt) {
+void Consumer::pop(BatchType& result, size_t cnt) {
     result.reserve(cnt);
     bool shouldRotate = false;
 
@@ -57,7 +57,7 @@ void Consumer::pull(BatchType& result, size_t cnt) {
 
     if (shouldRotate) {
         rotate();
-        pull(result, cnt);
+        pop(result, cnt);
     }
 }
 

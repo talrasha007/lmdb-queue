@@ -21,7 +21,7 @@ private:
     Consumer& operator=(const Consumer&);
 
 public:
-    void pull(BatchType& result, size_t cnt);
+    void pop(BatchType& result, size_t cnt);
 
 private:
     void openHead(Txn* txn);

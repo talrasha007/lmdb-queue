@@ -9,7 +9,7 @@ var consumer = new Consumer({ path: __dirname + '/test-data', topic: 'test', nam
 console.log('Begin read queue.');
 
 var cnt = 0;
-while (consumer.pull()) {
+while (consumer.pop()) {
     cnt++;
 }
 

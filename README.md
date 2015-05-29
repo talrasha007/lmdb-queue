@@ -42,7 +42,7 @@ options:
 */
 
 var msg;
-while (msg = consumer.pull()) {
+while (msg = consumer.pop()) {
     // ...do sth with msg...
 }
 ```
