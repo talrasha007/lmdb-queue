@@ -21,7 +21,7 @@ struct TopicOpt {
 
 struct TopicStatus{
     uint64_t producerHead;
-    std::map<std::string, uint64_t> consumerHead;
+    std::map<std::string, uint64_t> consumerHeads;
 };
 
 class Env {

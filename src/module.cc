@@ -1,5 +1,6 @@
 #include <nan.h>
 
+#include "topic.h"
 #include "producer.h"
 #include "consumer.h"
 
@@ -198,10 +199,67 @@ private:
     size_t _cur, _batchSize;
 };
 
+class TopicWrap : public ObjectWrap {
+public:
+    static void setup(Handle<Object>& exports) {
+        const char* className = "Topic";
+
+        Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(TopicWrap::ctor);
+        tpl->SetClassName(NanNew(className));
+        tpl->InstanceTemplate()->SetInternalFieldCount(1);
+
+        NODE_SET_PROTOTYPE_METHOD(tpl, "status", TopicWrap::status);
+
+        exports->Set(NanNew(className), tpl->GetFunction());
+    }
+
+private:
+    static NAN_METHOD(ctor) {
+        NanScope();
+
+        Handle<Object> opt = args[0]->ToObject();
+
+        NanUtf8String path(opt->Get(NanNew("path")));
+        NanUtf8String topicName(opt->Get(NanNew("topic")));
+
+        TopicWrap *ptr = new TopicWrap(*path, *topicName);
+
+        ptr->Wrap(args.This());
+        NanReturnValue(args.This());
+    }
+
+    static NAN_METHOD(status) {
+        NanScope();
+
+        TopicWrap* ptr = ObjectWrap::Unwrap<TopicWrap>(args.This());
+        TopicStatus st = ptr->_handle->status();
+
+        Local<Object> ret = NanNew<Object>();
+        ret->Set(NanNew("producerHead"), NanNew<Number>(double(st.producerHead)));
+
+        Local<Object> consumerHeads = NanNew<Object>();
+        for (auto it : st.consumerHeads) {
+            consumerHeads->Set(NanNew(it.first), NanNew<Number>(double(it.second)));
+        }
+        ret->Set(NanNew("consumerHeads"), consumerHeads);
+
+        NanReturnValue(ret);
+    }
+
+private:
+    TopicWrap(const char* path, const char* topicName) : _handle(EnvManager::getEnv(path)->getTopic(topicName)) {
+
+    }
+
+private:
+    Topic *_handle;
+};
+
 void init(v8::Handle<v8::Object> exports) {
     exports->Set(NanNew("STRING_TYPE"), NanNew(STRING_TYPE));
     exports->Set(NanNew("BUFFER_TYPE"), NanNew(BUFFER_TYPE));
 
+    TopicWrap::setup(exports);
     ProducerWrap::setup(exports);
     ConsumerWrap::setup(exports);
 }
