@@ -19,6 +19,11 @@ struct TopicOpt {
     size_t chunksToKeep;
 };
 
+struct TopicStatus{
+    uint64_t producerHead;
+    std::map<std::string, uint64_t> consumerHead;
+};
+
 class Env {
 private:
     friend class EnvManager;

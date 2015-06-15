@@ -56,6 +56,12 @@ Topic::~Topic() {
     mdb_dbi_close(_env->getMdbEnv(), _desc);
 }
 
+TopicStatus Topic::status() {
+    TopicStatus ret;
+
+    return ret;
+}
+
 uint32_t Topic::getProducerHeadFile(Txn& txn) {
     MDBCursor cur(_desc, txn.getEnvTxn());
     cur.gotoLast();

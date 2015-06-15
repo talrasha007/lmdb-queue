@@ -12,6 +12,8 @@ private:
     Topic& operator=(const Topic&);
 
 public:
+    TopicStatus status();
+
     inline Env* getEnv() { return _env; }
     inline const std::string& getName() { return _name; }
 

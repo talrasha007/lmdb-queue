@@ -58,7 +58,6 @@ public:
         tpl->SetClassName(NanNew(className));
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-        NODE_SET_PROTOTYPE_METHOD(tpl, "stats", ProducerWrap::stats);
         NODE_SET_PROTOTYPE_METHOD(tpl, "pushString", ProducerWrap::push<STRING_TYPE>);
         NODE_SET_PROTOTYPE_METHOD(tpl, "pushBuffer", ProducerWrap::push<BUFFER_TYPE>);
 
@@ -83,15 +82,6 @@ private:
         ProducerWrap* ptr = new ProducerWrap(*path, *topicName, &topicOpt);
         ptr->Wrap(args.This());
         NanReturnValue(args.This());
-    }
-
-    static NAN_METHOD(stats) {
-        NanScope();
-
-        ProducerWrap* ptr = ObjectWrap::Unwrap<ProducerWrap>(args.This());
-        ptr->_handle.stats();
-
-        NanReturnUndefined();
     }
 
     template<DataType DT> static NAN_METHOD(push) {

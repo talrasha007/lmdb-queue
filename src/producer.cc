@@ -28,10 +28,6 @@ Producer::~Producer() {
     closeCurrent();
 }
 
-void Producer::stats() {
-
-}
-
 bool Producer::push(const Producer::BatchType& batch) {
     bool isFull = false;
 

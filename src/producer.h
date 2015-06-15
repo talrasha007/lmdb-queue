@@ -22,7 +22,6 @@ private:
     Producer& operator=(const Producer&);
 
 public:
-    void stats();
     bool push(const BatchType& batch);
 
 private:
