@@ -5,6 +5,7 @@
 using namespace std;
 
 const char* keyProducerStr = "producer_head";
+const char* prefixConsumerStr = "consumer_head_";
 const char* keyConsumerStr = "consumer_head_%s";
 
 int descCmp(const MDB_val *a, const MDB_val *b) {
@@ -56,8 +57,29 @@ Topic::~Topic() {
     mdb_dbi_close(_env->getMdbEnv(), _desc);
 }
 
+bool checkConsumerKeyPrefix(const MDB_val& val) {
+    const char* str = (const char*)val.mv_data;
+    return val.mv_size > strlen(prefixConsumerStr) && strncmp(str, prefixConsumerStr, strlen(prefixConsumerStr)) == 0;
+}
+
 TopicStatus Topic::status() {
     TopicStatus ret;
+
+    Txn txn(_env, NULL);
+    ret.producerHead = getProducerHead(txn);
+
+    MDBCursor cur(_desc, txn.getEnvTxn());
+    int rc = cur.gotoFirst();
+    while (rc == 0 && checkConsumerKeyPrefix(cur.key())) {
+        char name[4096];
+        size_t nameLen = cur.key().mv_size - strlen(prefixConsumerStr);
+        const char* namePtr = ((const char*)cur.key().mv_data) + strlen(prefixConsumerStr);
+        strncpy(name, namePtr, nameLen);
+        name[nameLen] = 0;
+
+        ret.consumerHeads[name] = cur.val<uint64_t>();
+        rc = cur.next();
+    }
 
     return ret;
 }
