@@ -17,7 +17,7 @@ public:
         static ItemType create(size_t len);
 
     public:
-        ItemType(char* mem = nullptr, size_t len = 0) : _mem(mem), _len(len), _shouldDelete(false) {
+        ItemType(char* mem, size_t len) : _mem(mem), _len(len), _shouldDelete(false) {
         }
 
         ItemType(ItemType&& r) : _mem(r._mem), _len(r._len), _shouldDelete(r._shouldDelete) {

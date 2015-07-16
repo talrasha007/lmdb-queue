@@ -15,7 +15,6 @@ enum DataType {
 
 template<DataType DT> class BatchWrap {
 public:
-    ~BatchWrap();
     void push(const Local<Value>& val);
 
 public:
@@ -31,23 +30,16 @@ private:
     Producer::BatchType _batch;
 };
 
-template<> BatchWrap<STRING_TYPE>::~BatchWrap()  {
-    for (Producer::BatchType::iterator it = _batch.begin(); it != _batch.end(); ++it) delete[] std::get<0>(*it);
-}
-
 template<> void BatchWrap<STRING_TYPE>::push(const Local<Value>& val) {
     v8::Local<v8::String> toStr = val->ToString();
     size_t size = toStr->Utf8Length();
-    char* buf = new char[size + 1];
-    toStr->WriteUtf8(buf);
-    _batch.push_back(make_tuple(buf, size + 1));
-}
-
-template<> BatchWrap<BUFFER_TYPE>::~BatchWrap() {
+    Producer::ItemType item = Producer::ItemType::create(size + 1);
+    toStr->WriteUtf8(item.data());
+    _batch.push_back(std::move(item));
 }
 
 template<> void BatchWrap<BUFFER_TYPE>::push(const Local<Value>& val) {
-    _batch.push_back(make_tuple(node::Buffer::Data(val), node::Buffer::Length(val)));
+    _batch.push_back(Producer::ItemType(node::Buffer::Data(val), node::Buffer::Length(val)));
 }
 
 class ProducerWrap : public ObjectWrap {
