@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <vector>
 #include <tuple>
 #include <string>
@@ -11,7 +12,38 @@ class Topic;
 
 class Producer {
 public:
-    typedef std::vector<std::tuple<const char*, size_t> > BatchType;
+    class ItemType {
+    public:
+        static ItemType create(size_t len);
+
+    public:
+        ItemType(char* mem = nullptr, size_t len = 0) : _mem(mem), _len(len), _shouldDelete(false) {
+        }
+
+        ItemType(ItemType&& r) : _mem(r._mem), _len(r._len), _shouldDelete(r._shouldDelete) {
+            r._mem = nullptr;
+            r._len = 0;
+            r._shouldDelete = false;
+        }
+
+        ~ItemType();
+
+    public:
+        inline size_t len() const { return _len; }
+        inline char* data() { return _mem; }
+        inline const char* data() const { return _mem; }
+
+    private:
+        ItemType(const ItemType&);
+        ItemType& operator=(const ItemType&);
+
+    private:
+        char* _mem;
+        size_t _len;
+        bool _shouldDelete;
+    };
+
+    typedef std::vector<ItemType> BatchType;
 
 public:
 	Producer(const std::string& root, const std::string& topic, TopicOpt* opt);
@@ -24,7 +56,15 @@ private:
 public:
     bool push(const BatchType& batch);
 
+    inline std::chrono::milliseconds flushDur() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _lastFlush); }
+
+    void setCacheSize(size_t sz);
+    void push(ItemType&& item); // Push to cache
+    void flush();
+
 private:
+    void flushImpl();
+
     void openHead(Txn* txn, bool rotating = false);
     void closeCurrent();
     void rotate();
@@ -36,4 +76,9 @@ private:
     uint32_t _current;
     MDB_env* _env;
     MDB_dbi _db;
+
+    std::mutex _cacheMtx;
+    size_t _cacheMax; // Default: 100
+    BatchType _cache;
+    std::chrono::steady_clock::time_point _lastFlush;
 };

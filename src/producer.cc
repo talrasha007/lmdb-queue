@@ -10,7 +10,21 @@
 
 using namespace std;
 
-Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0) {
+Producer::ItemType Producer::ItemType::create(size_t len) {
+    ItemType ret(new char[len], len);
+    ret._shouldDelete = true;
+    return std::move(ret);
+}
+
+Producer::ItemType::~ItemType() {
+    if (_shouldDelete) {
+        delete _mem;
+    }
+}
+
+Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _cacheMax(100), _lastFlush(chrono::steady_clock::now()) {
+    _cache.reserve(_cacheMax);
+
     if (opt) {
         _opt = *opt;
     } else {
@@ -25,6 +39,7 @@ Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _to
 }
 
 Producer::~Producer() {
+    flush();
     closeCurrent();
 }
 
@@ -35,9 +50,9 @@ bool Producer::push(const Producer::BatchType& batch) {
         Txn txn(_topic->getEnv(), _env);
 
         uint64_t head = _topic->getProducerHead(txn);
-        for (auto item : batch) {
+        for (auto& item : batch) {
             MDB_val key{ sizeof(head), &++head },
-                    val{ std::get<1>(item), (void*)std::get<0>(item) };
+                    val{ item.len(), (void*)item.data() };
 
             int rc = mdb_put(txn.getTxn(), _db, &key, &val, MDB_APPEND);
             if (rc == MDB_MAP_FULL) {
@@ -62,6 +77,36 @@ bool Producer::push(const Producer::BatchType& batch) {
     }
 
     return true;
+}
+
+void Producer::setCacheSize(size_t sz) {
+    std::lock_guard<std::mutex> guard(_cacheMtx);
+    _cacheMax = sz;
+    _cache.reserve(sz);
+    if (_cache.size() > sz) {
+        flushImpl();
+    }
+}
+
+void Producer::push(ItemType&& item) {
+    std::lock_guard<std::mutex> guard(_cacheMtx);
+    _cache.push_back(std::move(item));
+    if (_cache.size() >= _cacheMax || flushDur().count() > 200) {
+        flushImpl();
+    }
+}
+
+void Producer::flush() {
+    std::lock_guard<std::mutex> guard(_cacheMtx);
+    flushImpl();
+}
+
+void Producer::flushImpl() {
+    _lastFlush = chrono::steady_clock::now();
+    if (_cache.size() > 0) {
+        push(_cache);
+        _cache.clear();
+    }
 }
 
 void Producer::closeCurrent() {
