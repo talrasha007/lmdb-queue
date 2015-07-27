@@ -22,7 +22,7 @@ Producer::ItemType::~ItemType() {
     }
 }
 
-Producer::Producer(const string& root, const string& topic, TopicOpt* opt, bool useBackgroundFlush) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _bgEnabled(useBackgroundFlush), _bgRunning(useBackgroundFlush), _cacheCurrent(&_cache0), _cacheMax(100) {
+Producer::Producer(const string& root, const string& topic, TopicOpt* opt, bool useBackgroundFlush) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _bgEnabled(useBackgroundFlush), _bgRunning(useBackgroundFlush), _cacheMax(100), _cacheCurrent(&_cache0) {
     if (opt) {
         _opt = *opt;
     } else {
@@ -45,8 +45,10 @@ Producer::Producer(const string& root, const string& topic, TopicOpt* opt, bool 
 Producer::~Producer() {
     if (_bgEnabled) {
         _bgRunning = false;
-        unique_lock<mutex> lck(_flushMtx);
-        _bgCv.notify_one();
+        {
+            unique_lock<mutex> lck(_flushMtx);
+            _bgCv.notify_one();
+        }
         _bgFlush.join();
     } else {
         flush();
