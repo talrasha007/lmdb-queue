@@ -22,7 +22,7 @@ Producer::ItemType::~ItemType() {
     }
 }
 
-Producer::Producer(const string& root, const string& topic, TopicOpt* opt, bool useBackgroundFlush) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _bgEnabled(useBackgroundFlush), _bgRunning(useBackgroundFlush), _cacheMax(100), _cacheCurrent(&_cache0) {
+Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _bgEnabled(false), _bgRunning(false), _cacheMax(100), _cacheCurrent(&_cache0) {
     if (opt) {
         _opt = *opt;
     } else {
@@ -36,10 +36,6 @@ Producer::Producer(const string& root, const string& topic, TopicOpt* opt, bool 
     txn.commit();
 
     _cache0.reserve(_cacheMax);
-    if (_bgEnabled) {
-        _cache1.reserve(_cacheMax);
-        _bgFlush = thread(bind(&Producer::flushWorker, this));
-    }
 }
 
 Producer::~Producer() {
@@ -55,6 +51,13 @@ Producer::~Producer() {
     }
 
     closeCurrent();
+}
+
+void Producer::enableBackgroundFlush() {
+    _bgEnabled = true;
+    _bgRunning = true;
+    _cache1.reserve(_cacheMax);
+    _bgFlush = thread(bind(&Producer::flushWorker, this));
 }
 
 bool Producer::push(const Producer::BatchType& batch) {
@@ -104,7 +107,21 @@ void Producer::setCacheSize(size_t sz) {
     }
 }
 
-void Producer::push(ItemType&& item) {
+void Producer::push2Cache(BatchType& batch) {
+    std::lock_guard<std::mutex> guard(_cacheMtx);
+
+    for (auto& item : batch) {
+        _cacheCurrent->push_back(std::move(item));
+    }
+
+    batch.clear();
+
+    if (_cacheCurrent->size() >= _cacheMax) {
+        flushImpl();
+    }
+}
+
+void Producer::push2Cache(ItemType&& item) {
     std::lock_guard<std::mutex> guard(_cacheMtx);
     _cacheCurrent->push_back(std::move(item));
     if (_cacheCurrent->size() >= _cacheMax) {

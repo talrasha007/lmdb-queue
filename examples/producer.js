@@ -3,7 +3,7 @@
 var LmdbQueue = require('../'),
     Producer = LmdbQueue.Producer;
 
-var producer = new Producer({ path: __dirname + '/test-data', topic: 'test', dataType: LmdbQueue.STRING_TYPE, chunkSize: 64 * 1024 * 1024, chunksToKeep: 8 }),
+var producer = new Producer({ backgroundFlush: true, useCache: true, path: __dirname + '/test-data', topic: 'test', dataType: LmdbQueue.STRING_TYPE, chunkSize: 64 * 1024 * 1024, chunksToKeep: 8 }),
     start = Date.now();
 
 console.log('Begin write to queue.');
@@ -17,3 +17,4 @@ for (var i = 0; i < 10 * 1000 * 1000; i += step) {
 }
 
 console.log('Pushed 10M messages in %d ms', Date.now() - start);
+setTimeout(function () {}, 12000);

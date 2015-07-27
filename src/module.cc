@@ -54,6 +54,9 @@ public:
         NODE_SET_PROTOTYPE_METHOD(tpl, "pushString", ProducerWrap::push<STRING_TYPE>);
         NODE_SET_PROTOTYPE_METHOD(tpl, "pushBuffer", ProducerWrap::push<BUFFER_TYPE>);
 
+        NODE_SET_PROTOTYPE_METHOD(tpl, "pushString2Cache", ProducerWrap::push2Cache<STRING_TYPE>);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "pushBuffer2Cache", ProducerWrap::push2Cache<BUFFER_TYPE>);
+
         exports->Set(NanNew(className), tpl->GetFunction());
     }
 
@@ -69,10 +72,11 @@ private:
         TopicOpt topicOpt{ 1024 * 1024 * 1024, 8 };
         Local<Value> chunkSize = opt->Get(NanNew("chunkSize"));
         Local<Value> chunksToKeep = opt->Get(NanNew("chunksToKeep"));
+        Local<Value> bgFlush = opt->Get(NanNew("backgroundFlush"));
         if (chunkSize->IsNumber()) topicOpt.chunkSize = size_t(chunkSize->NumberValue());
         if (chunksToKeep->IsNumber()) topicOpt.chunksToKeep = size_t(chunksToKeep->NumberValue());
 
-        ProducerWrap* ptr = new ProducerWrap(*path, *topicName, &topicOpt);
+        ProducerWrap* ptr = new ProducerWrap(*path, *topicName, &topicOpt, bgFlush->BooleanValue());
         ptr->Wrap(args.This());
         NanReturnValue(args.This());
     }
@@ -93,8 +97,27 @@ private:
         NanReturnUndefined();
     }
 
+    template<DataType DT> static NAN_METHOD(push2Cache) {
+        NanScope();
+
+        ProducerWrap* ptr = ObjectWrap::Unwrap<ProducerWrap>(args.This());
+
+        BatchWrap<DT> batch;
+        batch.reserve(args.Length());
+        for (int i = 0; i < args.Length(); i++) {
+            batch.push(args[i]);
+        }
+
+        ptr->_handle.push2Cache(batch.get());
+
+        NanReturnUndefined();
+    }
+
 private:
-    ProducerWrap(const char* path, const char* name, TopicOpt* opt) : _handle(path, name, opt, false) { }
+    ProducerWrap(const char* path, const char* name, TopicOpt* opt, bool bgFlush) : _handle(path, name, opt) {
+        if (bgFlush) _handle.enableBackgroundFlush();
+    }
+
     Producer _handle;
 };
 

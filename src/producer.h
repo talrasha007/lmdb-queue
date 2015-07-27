@@ -48,7 +48,7 @@ public:
     typedef std::vector<ItemType> BatchType;
 
 public:
-	Producer(const std::string& root, const std::string& topic, TopicOpt* opt, bool useBackgroundFlush);
+	Producer(const std::string& root, const std::string& topic, TopicOpt* opt);
 	~Producer();
 
 private:
@@ -58,8 +58,10 @@ private:
 public:
     bool push(const BatchType& batch);
 
+    void enableBackgroundFlush();
     void setCacheSize(size_t sz);
-    void push(ItemType&& item); // Push to cache
+    void push2Cache(BatchType& batch);
+    void push2Cache(ItemType&& item);
     void flush();
 
 private:
