@@ -24,15 +24,13 @@
       "conditions": [
         [
           "OS == 'win'", {
-            "defines": [
-              "_HAS_EXCEPTIONS=0"
-            ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeTypeInfo': 'false',
                 'EnableFunctionLevelLinking': 'true',
                 'ExceptionHandling': '2',
-                'DisableSpecificWarnings': [ '4267' ]
+                'DisableSpecificWarnings': [ '4267' ],
+                'AdditionalOptions': ['/EHsc']
               }
             }
           }
