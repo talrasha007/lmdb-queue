@@ -94,7 +94,7 @@ private:
     }
 
 private:
-    ProducerWrap(const char* path, const char* name, TopicOpt* opt) : _handle(path, name, opt) { }
+    ProducerWrap(const char* path, const char* name, TopicOpt* opt) : _handle(path, name, opt, false) { }
     Producer _handle;
 };
 

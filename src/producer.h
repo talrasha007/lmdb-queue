@@ -1,5 +1,7 @@
 #pragma once
 
+#include <thread>
+#include <condition_variable>
 #include <chrono>
 #include <vector>
 #include <tuple>
@@ -46,7 +48,7 @@ public:
     typedef std::vector<ItemType> BatchType;
 
 public:
-	Producer(const std::string& root, const std::string& topic, TopicOpt* opt);
+	Producer(const std::string& root, const std::string& topic, TopicOpt* opt, bool useBackgroundFlush);
 	~Producer();
 
 private:
@@ -56,13 +58,12 @@ private:
 public:
     bool push(const BatchType& batch);
 
-    inline std::chrono::milliseconds flushDur() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _lastFlush); }
-
     void setCacheSize(size_t sz);
     void push(ItemType&& item); // Push to cache
     void flush();
 
 private:
+    void flushWorker();
     void flushImpl();
 
     void openHead(Txn* txn, bool rotating = false);
@@ -77,8 +78,10 @@ private:
     MDB_env* _env;
     MDB_dbi _db;
 
-    std::mutex _cacheMtx;
+    bool _bgEnabled, _bgRunning;
+    std::thread _bgFlush;
+    std::condition_variable _bgCv;
+    std::mutex _cacheMtx, _flushMtx;
     size_t _cacheMax; // Default: 100
-    BatchType _cache;
-    std::chrono::steady_clock::time_point _lastFlush;
+    BatchType _cache0, _cache1, *_cacheCurrent;
 };

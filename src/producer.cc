@@ -22,9 +22,7 @@ Producer::ItemType::~ItemType() {
     }
 }
 
-Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _cacheMax(100), _lastFlush(chrono::steady_clock::now()) {
-    _cache.reserve(_cacheMax);
-
+Producer::Producer(const string& root, const string& topic, TopicOpt* opt, bool useBackgroundFlush) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _bgEnabled(useBackgroundFlush), _bgRunning(useBackgroundFlush), _cacheCurrent(&_cache0), _cacheMax(100) {
     if (opt) {
         _opt = *opt;
     } else {
@@ -36,10 +34,24 @@ Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _to
     Txn txn(_topic->getEnv(), NULL);
     openHead(&txn);
     txn.commit();
+
+    _cache0.reserve(_cacheMax);
+    if (_bgEnabled) {
+        _cache1.reserve(_cacheMax);
+        _bgFlush = thread(bind(&Producer::flushWorker, this));
+    }
 }
 
 Producer::~Producer() {
-    flush();
+    if (_bgEnabled) {
+        _bgRunning = false;
+        unique_lock<mutex> lck(_flushMtx);
+        _bgCv.notify_one();
+        _bgFlush.join();
+    } else {
+        flush();
+    }
+
     closeCurrent();
 }
 
@@ -82,16 +94,18 @@ bool Producer::push(const Producer::BatchType& batch) {
 void Producer::setCacheSize(size_t sz) {
     std::lock_guard<std::mutex> guard(_cacheMtx);
     _cacheMax = sz;
-    _cache.reserve(sz);
-    if (_cache.size() > sz) {
+
+    _cache0.reserve(sz);
+    if (_bgEnabled) _cache1.reserve(sz);
+    if (_cacheCurrent->size() > sz) {
         flushImpl();
     }
 }
 
 void Producer::push(ItemType&& item) {
     std::lock_guard<std::mutex> guard(_cacheMtx);
-    _cache.push_back(std::move(item));
-    if (_cache.size() >= _cacheMax || flushDur().count() > 200) {
+    _cacheCurrent->push_back(std::move(item));
+    if (_cacheCurrent->size() >= _cacheMax) {
         flushImpl();
     }
 }
@@ -101,11 +115,39 @@ void Producer::flush() {
     flushImpl();
 }
 
+void Producer::flushWorker() {
+    while (_bgRunning) {
+        {
+            unique_lock<mutex> lck(_flushMtx);
+            _bgCv.wait_for(lck, chrono::seconds(1));
+        }
+
+        BatchType *flush = nullptr;
+
+        {
+            lock_guard<mutex> guard(_cacheMtx);
+            if (_cacheCurrent->size() > 0) {
+                flush = _cacheCurrent;
+                _cacheCurrent = _cacheCurrent == &_cache0 ? &_cache1 : &_cache0;
+            }
+        }
+
+        if (flush) {
+            push(*flush);
+            flush->clear();
+        }
+    }
+}
+
 void Producer::flushImpl() {
-    _lastFlush = chrono::steady_clock::now();
-    if (_cache.size() > 0) {
-        push(_cache);
-        _cache.clear();
+    if (_cacheCurrent->size() > 0) {
+        if (_bgEnabled) {
+            unique_lock<mutex> lck(_flushMtx);
+            _bgCv.notify_one();
+        } else {
+            push(*_cacheCurrent);
+            _cacheCurrent->clear();
+        }
     }
 }
 
