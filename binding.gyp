@@ -28,7 +28,6 @@
               'VCCLCompilerTool': {
                 'RuntimeTypeInfo': 'false',
                 'EnableFunctionLevelLinking': 'true',
-                'ExceptionHandling': '2',
                 'DisableSpecificWarnings': [ '4267' ],
                 'AdditionalOptions': ['/EHsc']
               }
