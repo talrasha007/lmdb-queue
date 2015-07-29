@@ -115,7 +115,7 @@ private:
 
 private:
     ProducerWrap(const char* path, const char* name, TopicOpt* opt, bool bgFlush) : _handle(path, name, opt) {
-        if (bgFlush) _handle.enableBackgroundFlush();
+        if (bgFlush) _handle.enableBackgroundFlush(chrono::milliseconds(200));
     }
 
     Producer _handle;

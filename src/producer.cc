@@ -22,7 +22,7 @@ Producer::ItemType::~ItemType() {
     }
 }
 
-Producer::Producer(const string& root, const string& topic, TopicOpt* opt) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _bgEnabled(false), _bgRunning(false), _cacheMax(100), _cacheCurrent(&_cache0) {
+Producer::Producer(const string& root, const string& topic, TopicOpt* opt, size_t cacheMax) : _topic(EnvManager::getEnv(root)->getTopic(topic)), _current(-1), _env(nullptr), _db(0), _bgEnabled(false), _bgRunning(false), _cacheMax(cacheMax), _cacheCurrent(&_cache0) {
     if (opt) {
         _opt = *opt;
     } else {
@@ -53,11 +53,23 @@ Producer::~Producer() {
     closeCurrent();
 }
 
-void Producer::enableBackgroundFlush() {
-    _bgEnabled = true;
-    _bgRunning = true;
-    _cache1.reserve(_cacheMax);
-    _bgFlush = thread(bind(&Producer::flushWorker, this));
+bool Producer::enableBackgroundFlush(chrono::milliseconds flushInterval) {
+    if (!_bgEnabled) {
+        if (flushInterval < chrono::milliseconds(2)) {
+            cout << "LMDB_QUEUE WARNING: Background flush interval cannot less than 2ms." << endl;
+            flushInterval = chrono::milliseconds(2);
+        }
+
+        _bgEnabled = true;
+        _bgRunning = true;
+        _cache1.reserve(_cacheMax);
+        _flushInterval = flushInterval;
+        _bgFlush = thread(bind(&Producer::flushWorker, this));
+        return true;
+    } else {
+        cout << "LMDB_QUEUE WARNING: Background flush thread already started." << endl;
+        return false;
+    }
 }
 
 bool Producer::push(const Producer::BatchType& batch) {
@@ -100,8 +112,6 @@ void Producer::setCacheSize(size_t sz) {
     std::lock_guard<std::mutex> guard(_cacheMtx);
     _cacheMax = sz;
 
-    _cache0.reserve(sz);
-    if (_bgEnabled) _cache1.reserve(sz);
     if (_cacheCurrent->size() > sz) {
         flushImpl();
     }
@@ -138,7 +148,7 @@ void Producer::flushWorker() {
     while (_bgRunning) {
         {
             unique_lock<mutex> lck(_flushMtx);
-            _bgCv.wait_for(lck, chrono::seconds(1));
+            _bgCv.wait_for(lck, _flushInterval);
         }
 
         BatchType *flush = nullptr;

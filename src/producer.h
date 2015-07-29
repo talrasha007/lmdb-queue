@@ -48,7 +48,7 @@ public:
     typedef std::vector<ItemType> BatchType;
 
 public:
-	Producer(const std::string& root, const std::string& topic, TopicOpt* opt);
+	Producer(const std::string& root, const std::string& topic, TopicOpt* opt, size_t cacheMax = 128);
 	~Producer();
 
 private:
@@ -58,7 +58,7 @@ private:
 public:
     bool push(const BatchType& batch);
 
-    void enableBackgroundFlush();
+    bool enableBackgroundFlush(std::chrono::milliseconds flushInterval = std::chrono::milliseconds(200));
     void setCacheSize(size_t sz);
     void push2Cache(BatchType& batch);
     void push2Cache(ItemType&& item);
@@ -80,6 +80,7 @@ private:
     MDB_env* _env;
     MDB_dbi _db;
 
+    std::chrono::milliseconds _flushInterval;
     bool _bgEnabled, _bgRunning;
     std::thread _bgFlush;
     std::condition_variable _bgCv;
