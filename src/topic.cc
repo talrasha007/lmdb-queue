@@ -76,8 +76,8 @@ TopicStatus Topic::status() {
         const char* namePtr = ((const char*)cur.key().mv_data) + strlen(prefixConsumerStr);
         strncpy(name, namePtr, nameLen);
         name[nameLen] = 0;
+        ret.consumerHeads[name] = *(ConsumeInfo*)(cur.val().mv_data);
 
-        ret.consumerHeads[name] = cur.val<uint64_t>();
         rc = cur.next();
     }
 
@@ -152,12 +152,13 @@ uint64_t Topic::getConsumerHead(Txn& txn, const std::string& name) {
     }
 }
 
-void Topic::setConsumerHead(Txn& txn, const std::string& name, uint64_t head) {
+void Topic::setConsumerHead(Txn& txn, const std::string& name, uint64_t head, uint64_t byte) {
     char keyStr[4096];
     sprintf(keyStr, keyConsumerStr, name.c_str());
 
+    ConsumeInfo info = { head, byte };
     MDB_val key{ strlen(keyStr), keyStr },
-            val{ sizeof(head), &head };
+            val{ sizeof(info), &info };
 
     mdb_put(txn.getEnvTxn(), _desc, &key, &val, 0);
 }
