@@ -25,6 +25,7 @@ public:
 
     uint32_t getConsumerHeadFile(Txn& txn, const std::string& name, uint32_t searchFrom);
     uint64_t getConsumerHead(Txn& txn, const std::string& name);
+    uint64_t getConsumerByte(Txn& txn, const std::string& name);
     void setConsumerHead(Txn& txn, const std::string& name, uint64_t head, uint64_t byte);
 
     int getChunkFilePath(char* buf, uint32_t chunkSeq);

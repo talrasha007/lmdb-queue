@@ -30,11 +30,11 @@ void Consumer::pop(BatchType& result, size_t cnt) {
         mdb_txn_renew(_rtxn);
 
         uint64_t head = _topic->getConsumerHead(txn, _name);
+        uint64_t byte = _topic->getConsumerByte(txn, _name);
         int rc = _cursor->gte(head);
 
         if (rc == 0) {
             uint64_t offset = 0;
-            uint64_t byte = 0;
             for (; rc == 0 && cnt > 0; --cnt) {
                 offset = _cursor->key<uint64_t>();
                 const char* data = (const char*)_cursor->val().mv_data;
