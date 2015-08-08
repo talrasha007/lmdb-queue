@@ -165,7 +165,10 @@ uint64_t Topic::getConsumerByte(Txn& txn, const std::string& name) {
 
         MDBCursor cur(_desc, txn.getEnvTxn());
         cur.gte(uint32_t(0));
-        return cur.val<ConsumerInfo>().byte;
+        if (cur.val<uint64_t>() == 0)
+            return 0;
+        else
+            return ((ConsumeInfo*)val.mv_data)->byte;
     }
 }
 
