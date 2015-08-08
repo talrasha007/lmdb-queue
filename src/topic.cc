@@ -76,8 +76,8 @@ TopicStatus Topic::status() {
         const char* namePtr = ((const char*)cur.key().mv_data) + strlen(prefixConsumerStr);
         strncpy(name, namePtr, nameLen);
         name[nameLen] = 0;
+        ret.consumerHeads[name] = *(ConsumeInfo*)(cur.val().mv_data);
 
-        ret.consumerHeads[name] = cur.val<uint64_t>();
         rc = cur.next();
     }
 
@@ -152,12 +152,33 @@ uint64_t Topic::getConsumerHead(Txn& txn, const std::string& name) {
     }
 }
 
-void Topic::setConsumerHead(Txn& txn, const std::string& name, uint64_t head) {
+uint64_t Topic::getConsumerByte(Txn& txn, const std::string& name) {
     char keyStr[4096];
     sprintf(keyStr, keyConsumerStr, name.c_str());
 
+    MDB_val key{ strlen(keyStr), keyStr }, val{ 0, nullptr };
+    int rc = mdb_get(txn.getEnvTxn(), _desc, &key, &val);
+    if (rc == 0) {
+        return ((ConsumeInfo*)val.mv_data)->byte;
+    } else {
+        if (rc != MDB_NOTFOUND) cout << "Consumer seek error: " << mdb_strerror(rc) << endl;
+
+        MDBCursor cur(_desc, txn.getEnvTxn());
+        cur.gte(uint32_t(0));
+        if (cur.val<uint64_t>() == 0)
+            return 0;
+        else
+            return ((ConsumeInfo*)val.mv_data)->byte;
+    }
+}
+
+void Topic::setConsumerHead(Txn& txn, const std::string& name, uint64_t head, uint64_t byte) {
+    char keyStr[4096];
+    sprintf(keyStr, keyConsumerStr, name.c_str());
+
+    ConsumeInfo info = { head, byte };
     MDB_val key{ strlen(keyStr), keyStr },
-            val{ sizeof(head), &head };
+            val{ sizeof(info), &info };
 
     mdb_put(txn.getEnvTxn(), _desc, &key, &val, 0);
 }

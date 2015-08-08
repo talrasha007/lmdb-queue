@@ -30,6 +30,7 @@ void Consumer::pop(BatchType& result, size_t cnt) {
         mdb_txn_renew(_rtxn);
 
         uint64_t head = _topic->getConsumerHead(txn, _name);
+        uint64_t byte = _topic->getConsumerByte(txn, _name);
         int rc = _cursor->gte(head);
 
         if (rc == 0) {
@@ -39,11 +40,12 @@ void Consumer::pop(BatchType& result, size_t cnt) {
                 const char* data = (const char*)_cursor->val().mv_data;
                 size_t len = _cursor->val().mv_size;
                 result.push_back(ItemType(offset, data, len));
+                byte += len;
                 rc = _cursor->next();
             }
 
             if (offset > 0) {
-                _topic->setConsumerHead(txn, _name, offset + 1);
+                _topic->setConsumerHead(txn, _name, offset + 1, byte);
                 txn.commit();
             }
         } else {

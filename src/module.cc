@@ -253,8 +253,11 @@ private:
         ret->Set(NanNew("producerHead"), NanNew<Number>(double(st.producerHead)));
 
         Local<Object> consumerHeads = NanNew<Object>();
+        Handle<Object> info = NanNew<Object>();
         for (auto it : st.consumerHeads) {
-            consumerHeads->Set(NanNew(it.first), NanNew<Number>(double(it.second)));
+            info->Set(NanNew<String>("head"), NanNew<Number>(double(it.second.head)));
+            info->Set(NanNew<String>("byte"), NanNew<Number>(double(it.second.byte)));
+            consumerHeads->Set(NanNew(it.first), info);
         }
         ret->Set(NanNew("consumerHeads"), consumerHeads);
 

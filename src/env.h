@@ -19,9 +19,14 @@ struct TopicOpt {
     size_t chunksToKeep;
 };
 
+struct ConsumeInfo {
+    uint64_t head;
+    uint64_t byte;
+};
+
 struct TopicStatus{
     uint64_t producerHead;
-    std::map<std::string, uint64_t> consumerHeads;
+    std::map<std::string, ConsumeInfo> consumerHeads;
 };
 
 class Env {
