@@ -1,7 +1,7 @@
 {
   "name": "lmdb-queue",
   "description": "An embed, kafka like queue.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "repository": "https://github.com/talrasha007/lmdb-queue.git",
   "dependencies": {
     "nan": "~1.8.4"
