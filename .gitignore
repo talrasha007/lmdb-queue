@@ -1,5 +1,9 @@
 # IDE File
 .idea
+.vscode
+
+# Test Data
+test-data
 
 # Logs
 logs

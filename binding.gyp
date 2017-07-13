@@ -4,6 +4,7 @@
       "target_name": "lmdb-queue",
 	  "include_dirs" : [
         "<!(node -e \"require('nan')\")",
+        "<!(node -e \"require('nnu')\")",
         "deps"
       ],
       "dependencies": [
